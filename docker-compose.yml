@@ -1,0 +1,169 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════
+#  AI News Agent - 完全免費本地部署架構
+#  服務: Redis / Qdrant / Ollama / FastAPI / Celery
+# ═══════════════════════════════════════════════════
+
+services:
+
+  # ── Redis：Celery Broker + Result Backend + Cache ──
+  redis:
+    image: redis:7.4-alpine
+    container_name: ai-news-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Qdrant：向量資料庫（去重用）──
+  qdrant:
+    image: qdrant/qdrant:v1.11.0
+    container_name: ai-news-qdrant
+    ports:
+      - "6333:6333"   # HTTP API
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Ollama：本地 LLM（免費，完全本地）──
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-news-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      # 若有 GPU，可改為 nvidia，若無則用 cpu
+      - OLLAMA_NUM_PARALLEL=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 20s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  # ── FastAPI App：REST API + 管理介面 ──
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-news-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level info
+    restart: unless-stopped
+
+  # ── Celery Worker：執行非同步分析任務 ──
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-news-worker
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: >
+      celery -A tasks.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      --queues=collect,analyze,notify
+    restart: unless-stopped
+
+  # ── Celery Beat：定時排程（每 N 分鐘觸發採集）──
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-news-beat
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - beat_data:/app/beat_data
+    command: >
+      celery -A tasks.celery_app beat
+      --loglevel=info
+      --scheduler celery.beat.PersistentScheduler
+      --schedule /app/beat_data/celerybeat-schedule
+    restart: unless-stopped
+
+  # ── Flower：Celery 監控 UI（選用）──
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-news-flower
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - redis
+    command: celery -A tasks.celery_app flower --port=5555
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  qdrant_data:
+  ollama_models:
+  beat_data:

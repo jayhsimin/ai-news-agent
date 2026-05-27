@@ -1,0 +1,50 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ── 環境變數（含機密資訊，不可納入版控）──
+.env
+.env.*
+!.env.example
+
+# ── Docker ──
+.docker/
+
+# ── Celery ──
+celerybeat-schedule
+celerybeat.pid
+beat_data/
+
+# ── Virtual environments ──
+venv/
+.venv/
+env/
+.env/
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── Claude Code 相關設定檔不納入版控 ──
+CLAUDE.md
+**/CLAUDE.md
+.claude/
