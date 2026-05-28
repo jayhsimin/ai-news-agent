@@ -13,6 +13,7 @@ from collectors import (
     HackerNewsCollector,
     GitHubCollector,
     ArxivCollector,
+    RSSFeedCollector,
     NewsItem,
 )
 from config import settings
@@ -30,10 +31,13 @@ class CollectorAgent(BaseAgent):
         # 初始化所有 collector
         self.collectors = []
 
-        # GitHub 和 HackerNews 無需 API Key，永遠加入
+        # 無需 API Key 的來源，永遠加入
         self.collectors.append(HackerNewsCollector())
         self.collectors.append(GitHubCollector())
         self.collectors.append(ArxivCollector())
+        # RSS feeds：Hugging Face, DeepMind, Google AI, NVIDIA,
+        #            OpenAI, Anthropic, MIT Tech Review, The Batch
+        self.collectors.append(RSSFeedCollector())
 
         # Reddit 需要 API Key，僅在設定完整時加入
         if settings.is_reddit_configured:

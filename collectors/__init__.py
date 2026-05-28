@@ -8,6 +8,7 @@ from collectors.reddit import RedditCollector
 from collectors.hackernews import HackerNewsCollector
 from collectors.github import GitHubCollector
 from collectors.arxiv_collector import ArxivCollector
+from collectors.rss_collector import RSSFeedCollector
 
 __all__ = [
     "BaseCollector",
@@ -16,4 +17,5 @@ __all__ = [
     "HackerNewsCollector",
     "GitHubCollector",
     "ArxivCollector",
+    "RSSFeedCollector",
 ]
