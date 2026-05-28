@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     TELEGRAM_ENABLED: bool = True
 
     # ── 排程設定 ──
-    COLLECT_INTERVAL_MINUTES: int = 30
+    COLLECT_INTERVAL_MINUTES: int = 180
 
     # ── Groq API（GitHub Actions 雲端 LLM，免費）──
     GROQ_API_KEY: Optional[str] = None
