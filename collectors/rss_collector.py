@@ -26,7 +26,7 @@ DEFAULT_AI_FEEDS = [
     {
         "name": "google_deepmind",
         "display": "Google DeepMind Blog",
-        "url": "https://deepmind.google/discover/blog/rss.xml",
+        "url": "https://deepmind.google/blog/rss/",
         "tags": ["deepmind", "google", "official", "research"],
         "filter": False,
     },
@@ -54,7 +54,7 @@ DEFAULT_AI_FEEDS = [
     {
         "name": "anthropic_news",
         "display": "Anthropic News",
-        "url": "https://www.anthropic.com/news.rss",
+        "url": "https://www.anthropic.com/rss.xml",
         "tags": ["anthropic", "official", "safety", "models"],
         "filter": False,
     },
@@ -63,19 +63,19 @@ DEFAULT_AI_FEEDS = [
         "display": "MIT Technology Review",
         "url": "https://www.technologyreview.com/feed/",
         "tags": ["mit", "research", "innovation", "frontier"],
-        "filter": True,   # broad tech publication, need AI filter
+        "filter": True,
     },
     {
         "name": "the_batch",
         "display": "The Batch (DeepLearning.AI)",
-        "url": "https://www.deeplearning.ai/the-batch/rss/",
+        "url": "https://www.deeplearning.ai/the-batch/feed/",
         "tags": ["deeplearning-ai", "newsletter", "digest"],
         "filter": False,
     },
     {
         "name": "meta_ai_blog",
         "display": "Meta AI Blog",
-        "url": "https://ai.meta.com/blog/rss/",
+        "url": "https://ai.meta.com/blog/feed/",
         "tags": ["meta", "official", "models", "research"],
         "filter": False,
     },

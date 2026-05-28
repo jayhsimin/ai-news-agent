@@ -90,7 +90,7 @@ class ArxivCollector(BaseCollector):
                     tags=[
                         "arxiv",
                         category,
-                        *[cat.term for cat in paper.categories[:3]],
+                        *[cat.term if hasattr(cat, "term") else str(cat) for cat in paper.categories[:3]],
                     ],
                 )
                 items.append(item)
