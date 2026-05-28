@@ -82,14 +82,36 @@ async def main() -> None:
         return
 
     # ── 階段 3：Groq 分析（摘要 + 分類 + 評分）──────────────
-    logger.info(f"【3/4】Groq 分析 {len(new_items)} 篇文章...")
+    # 每次最多分析 80 篇：控制執行時間與 API 用量
+    # 優先順序：RSS 官方來源 > arXiv > GitHub > HackerNews
+    MAX_ANALYZE = 80
+    SOURCE_PRIORITY = {"rss": 0, "arxiv": 1, "github": 2, "hackernews": 3}
+
+    def _priority(item):
+        src = item.source.lower()
+        # RSS 類來源（huggingface_blog、openai_blog 等）歸為最高優先
+        if any(src.startswith(k) for k in SOURCE_PRIORITY):
+            return SOURCE_PRIORITY.get(src, 2)
+        return 0  # 其他 RSS 來源也視為高優先
+
+    to_analyze = sorted(new_items, key=_priority)[:MAX_ANALYZE]
+    skipped_analyze = len(new_items) - len(to_analyze)
+
+    logger.info(
+        f"【3/4】Groq 分析 {len(to_analyze)} 篇文章"
+        + (f"（已略過低優先 {skipped_analyze} 篇）" if skipped_analyze else "")
+    )
+
+    # 略過分析的文章仍需標記已見，避免下次重複
+    for item in new_items[MAX_ANALYZE:]:
+        dedup.mark_seen(item)
 
     from processors.groq_analyzer import GroqAnalyzer
 
     analyzer = GroqAnalyzer(api_key=os.environ["GROQ_API_KEY"])
     analyzed_items = []
 
-    for i, item in enumerate(new_items):
+    for i, item in enumerate(to_analyze):
         try:
             result = await analyzer.analyze(item)
             item.summary = result["summary"]
@@ -102,14 +124,14 @@ async def main() -> None:
             item.relevance_score = 5.0
 
         analyzed_items.append(item)
-        dedup.mark_seen(item)  # 無論分析成否，都標記已見
+        dedup.mark_seen(item)
 
         if (i + 1) % 10 == 0:
-            logger.info(f"  進度：{i+1}/{len(new_items)}")
+            logger.info(f"  進度：{i+1}/{len(to_analyze)}")
 
-        # Groq 免費方案 30 req/min → 每篇間隔 2 秒，確保不超速
-        if i < len(new_items) - 1:
-            await asyncio.sleep(2)
+        # Groq 免費方案 30 req/min → 間隔 3 秒（20 req/min），有緩衝避免 rate limit
+        if i < len(to_analyze) - 1:
+            await asyncio.sleep(3)
 
     # 儲存去重快取（無論後續推播成功與否都要儲存）
     dedup.save()

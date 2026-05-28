@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 
     # ── 推播品質門檻 ──
-    MIN_RELEVANCE_SCORE: float = 6.0  # 分數低於此值不推播（0~10）
+    MIN_RELEVANCE_SCORE: float = 7.0  # 分數低於此值不推播（0~10）
 
     @field_validator("SIMILARITY_THRESHOLD")
     @classmethod
