@@ -114,6 +114,18 @@ async def main() -> None:
     # 儲存去重快取（無論後續推播成功與否都要儲存）
     dedup.save()
 
+    # ── Rate limit 通知 ──────────────────────────────────────
+    if analyzer.rate_limit_count > 0:
+        from notifiers.telegram import TelegramNotifier as _TG
+        _notifier = _TG()
+        await _notifier.send_system_message(
+            f"⚠️ <b>Groq Rate Limit 警告</b>\n\n"
+            f"本次 pipeline 共觸發 <b>{analyzer.rate_limit_count} 次</b> Rate Limit\n"
+            f"每次已等待 15 秒後重試（最多重試 3 次）\n\n"
+            f"若頻繁出現，可考慮調低採集頻率或換用較低配額的模型"
+        )
+        logger.warning(f"[Rate Limit] 共觸發 {analyzer.rate_limit_count} 次，已發送 Telegram 通知")
+
     # ── 階段 4：推播到 Telegram ─────────────────────────────
     logger.info("【4/4】Telegram 推播...")
 

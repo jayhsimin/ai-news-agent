@@ -52,6 +52,7 @@ class GroqAnalyzer:
     """
     Groq 雲端 LLM 分析器
     單次 API 呼叫完成摘要 + 分類 + 評分，節省 API 配額
+    Rate limit 觸發時最多重試 3 次（共嘗試 4 次），並記錄觸發次數供外部通知使用
     """
 
     def __init__(self, api_key: str | None = None):
@@ -60,9 +61,11 @@ class GroqAnalyzer:
             raise ValueError("GROQ_API_KEY 未設定，請至 https://console.groq.com 申請免費 API Key")
         self.model = os.environ.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
         self._categories_str = "、".join(AI_CATEGORIES)
+        # 記錄本次執行中 rate limit 觸發次數，供 pipeline 決定是否發 Telegram 通知
+        self.rate_limit_count: int = 0
 
     @retry(
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(4),   # 初次 + 最多重試 3 次
         wait=wait_exponential(multiplier=1, min=3, max=20),
     )
     async def analyze(self, item: NewsItem) -> dict:
@@ -95,7 +98,10 @@ class GroqAnalyzer:
                 )
 
                 if resp.status_code == 429:
-                    logger.warning("[Groq] Rate limit 觸發，等待 15 秒後重試")
+                    self.rate_limit_count += 1
+                    logger.warning(
+                        f"[Groq] Rate limit 觸發（第 {self.rate_limit_count} 次），等待 15 秒後重試"
+                    )
                     await asyncio.sleep(15)
                     raise httpx.HTTPStatusError("429", request=resp.request, response=resp)
 
