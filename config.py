@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     # ── 排程設定 ──
     COLLECT_INTERVAL_MINUTES: int = 30
 
+    # ── Groq API（GitHub Actions 雲端 LLM，免費）──
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
+
     # ── 推播品質門檻 ──
     MIN_RELEVANCE_SCORE: float = 6.0  # 分數低於此值不推播（0~10）
 
