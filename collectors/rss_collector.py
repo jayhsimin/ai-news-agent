@@ -26,7 +26,7 @@ DEFAULT_AI_FEEDS = [
     {
         "name": "google_deepmind",
         "display": "Google DeepMind Blog",
-        "url": "https://deepmind.google/blog/rss/",
+        "url": "https://deepmind.google/blog/rss.xml",
         "tags": ["deepmind", "google", "official", "research"],
         "filter": False,
     },
@@ -54,7 +54,8 @@ DEFAULT_AI_FEEDS = [
     {
         "name": "anthropic_news",
         "display": "Anthropic News",
-        "url": "https://www.anthropic.com/rss.xml",
+        # 官方無 RSS，使用社群維護的 GitHub raw feed
+        "url": "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml",
         "tags": ["anthropic", "official", "safety", "models"],
         "filter": False,
     },
@@ -64,20 +65,6 @@ DEFAULT_AI_FEEDS = [
         "url": "https://www.technologyreview.com/feed/",
         "tags": ["mit", "research", "innovation", "frontier"],
         "filter": True,
-    },
-    {
-        "name": "the_batch",
-        "display": "The Batch (DeepLearning.AI)",
-        "url": "https://www.deeplearning.ai/the-batch/feed/",
-        "tags": ["deeplearning-ai", "newsletter", "digest"],
-        "filter": False,
-    },
-    {
-        "name": "meta_ai_blog",
-        "display": "Meta AI Blog",
-        "url": "https://ai.meta.com/blog/feed/",
-        "tags": ["meta", "official", "models", "research"],
-        "filter": False,
     },
     {
         "name": "towards_data_science",
