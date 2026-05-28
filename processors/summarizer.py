@@ -89,14 +89,22 @@ class Summarizer:
             logger.error(f"[摘要] 生成失敗：{e}")
             return item.title  # 降級：至少回傳標題
 
-    async def check_ollama_available(self) -> bool:
+    async def get_available_models(self) -> list[str]:
         """
-        檢查 Ollama 服務是否可用
-        用於啟動時健康檢查
+        取得 Ollama 已安裝模型清單
         """
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(f"{settings.OLLAMA_BASE_URL}/api/tags")
-                return resp.status_code == 200
+                resp.raise_for_status()
+                data = resp.json()
+                return [m.get("name") for m in data.get("models", []) if m.get("name")]
         except Exception:
-            return False
+            return []
+
+    async def check_ollama_available(self) -> bool:
+        """
+        檢查 Ollama 服務是否可用，並確認指定模型是否已安裝
+        """
+        models = await self.get_available_models()
+        return settings.OLLAMA_MODEL in models

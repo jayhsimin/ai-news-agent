@@ -1,0 +1,24 @@
+[Unit]
+Description=AI News Agent (Docker Compose)
+Documentation=https://github.com/your/repo
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# 修改為專案在伺服器上的絕對路徑
+WorkingDirectory=/opt/ai-news-agent
+TimeoutStartSec=0
+RemainAfterExit=yes
+
+# 若系統使用 "docker compose" 子命令，請使用 /usr/bin/docker compose
+# 若使用舊版 docker-compose 二進位檔，改成 /usr/local/bin/docker-compose
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+ExecStop=/usr/bin/docker compose down
+
+# 若希望在失敗時重新啟動（此類型為 oneshot，Restart 只在 ExecStart 失敗時生效）
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

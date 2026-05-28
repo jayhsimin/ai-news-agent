@@ -139,11 +139,17 @@ async def _async_health_check() -> dict:
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.get(f"{settings.OLLAMA_BASE_URL}/api/tags")
-            ollama_models = resp.json().get("models", [])
+            resp.raise_for_status()
+            ollama_models = [m.get("name") for m in resp.json().get("models", []) if m.get("name")]
             status["ollama"] = {
-                "ok": True,
-                "models": [m["name"] for m in ollama_models],
+                "ok": settings.OLLAMA_MODEL in ollama_models,
+                "models": ollama_models,
             }
+            if settings.OLLAMA_MODEL not in ollama_models:
+                status["ollama"]["error"] = (
+                    f"Model '{settings.OLLAMA_MODEL}' not found. "
+                    f"已安裝模型：{', '.join(ollama_models) or '無'}"
+                )
     except Exception as e:
         status["ollama"] = {"ok": False, "error": str(e)}
 

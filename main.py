@@ -42,12 +42,18 @@ async def lifespan(app: FastAPI):
     try:
         from processors.summarizer import Summarizer
         summarizer = Summarizer()
-        ollama_ok = await summarizer.check_ollama_available()
-        if ollama_ok:
+        ollama_models = await summarizer.get_available_models()
+        if settings.OLLAMA_MODEL in ollama_models:
             logger.info(f"✅ Ollama 服務正常，使用模型：{settings.OLLAMA_MODEL}")
+        elif ollama_models:
+            logger.warning(
+                "⚠️ Ollama 服務正常，但未安裝指定模型。\n"
+                f"   已安裝模型：{', '.join(ollama_models)}\n"
+                f"   請執行：docker exec -it ai-news-ollama ollama pull {settings.OLLAMA_MODEL}"
+            )
         else:
             logger.warning(
-                f"⚠️ Ollama 服務無法連接（{settings.OLLAMA_BASE_URL}）\n"
+                "⚠️ Ollama 服務正常，但尚未安裝任何模型。\n"
                 f"   請執行：docker exec -it ai-news-ollama ollama pull {settings.OLLAMA_MODEL}"
             )
     except Exception as e:
