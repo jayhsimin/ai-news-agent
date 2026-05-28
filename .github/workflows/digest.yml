@@ -60,6 +60,8 @@ jobs:
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'llama-3.1-8b-instant' }}
           # 去重快取檔案路徑
           SEEN_URLS_PATH: seen_urls.json
+          # 讓 Python 找得到專案根目錄的模組（collectors, processors 等）
+          PYTHONPATH: ${{ github.workspace }}
         run: python scripts/gha_pipeline.py
 
       # ── 6. 儲存去重快取（無論 pipeline 成功與否都儲存）──────
